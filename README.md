@@ -34,9 +34,11 @@ and `.nsmp*` files). Select the bundles in the bundle picker. Programs are
 expanded into the Library; bundled pianos and samples are indexed and read on
 demand, without loading the whole archive. Keep the original bundles in that
 folder. The single-program Import button still accepts individual programs.
-Open a Stage 4 program and press **Play this program** to load the active scene's
-available layers. Play the on-screen keyboard or connect a MIDI keyboard. Loading
-is cancellable; Stop, changing scene or leaving the program silences the preview.
+Programs start armed: selecting a Stage 4 program automatically loads the active
+scene's available layers for the on-screen or connected MIDI keyboard. Arming
+follows program and scene changes for the session. **Disarm programs** cancels
+loading and silences playback; it stays disarmed across selections until **Arm
+programs** is pressed. Leaving the program always disposes its voices.
 All piano/sample references in the two locally tested signature bundles resolve
 from their bundled recordings; no downloads were needed.
 

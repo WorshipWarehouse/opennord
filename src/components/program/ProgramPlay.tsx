@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui';
 import { KeyboardZoneMap } from '@/components/sample/KeyboardZoneMap';
 import { MidiConnect } from '@/components/sample/MidiConnect';
@@ -8,12 +8,13 @@ import { useFolderOptional } from '@/lib/folder/FolderContext';
 import { extractBackupEntry } from '@/lib/clavia/backup/extract-entry';
 import type { NS4Program } from '@/lib/ns4/types';
 import { planProgram } from '@/lib/engine/program/plan';
+import { useProgramArmed, setProgramArmed } from '@/lib/engine/program/armed';
 import { createProgramPlayer, type ProgramPlayer } from '@/lib/engine/program/player';
 
 const NO_ZONES: never[] = [];
 const noop = () => {};
 
-/** Explicitly armed: opening a preset never steals MIDI or decodes large pianos. */
+/** Armed programs follow the selection; only this mounted inspector owns audio. */
 export function ProgramPlay({ program, scene }: { program: NS4Program; scene: 'I' | 'II' }) {
   const folder = useFolderOptional();
   const result = folder?.result;
@@ -23,18 +24,34 @@ export function ProgramPlay({ program, scene }: { program: NS4Program; scene: 'I
   const [error, setError] = useState('');
   const [velocity, setVelocity] = useState(90);
   const [sounding, setSounding] = useState<ReadonlySet<number>>(new Set());
-  const gen = useRef(0);
-  const current = useRef<ProgramPlayer | null>(null);
+  const armed = useProgramArmed();
+  const [retry, setRetry] = useState(0);
+  const openBundle = folder?.openBundle;
   const midi = useOptionalMidi();
   const setSink = midi?.setSink, clearSink = midi?.clearSink;
 
   useEffect(() => {
-    gen.current++; current.current?.dispose(); current.current = null;
-    setPlayer(null); setLoading(false); setSounding(new Set());
-    // This is an async-load generation counter, deliberately read at cleanup.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    return () => { gen.current++; current.current?.dispose(); current.current = null; };
-  }, [program, scene, plan]);
+    let cancelled = false;
+    let owned: ProgramPlayer | null = null;
+    setPlayer(null); setLoading(false); setSounding(new Set()); setError('');
+    if (!armed || !result) return;
+    setLoading(true);
+    void (async () => {
+      try {
+        const ctx = getSharedCtx();
+        const v = await createProgramPlayer(ctx, program, scene, plan, async source => {
+          if (source.bytes) return source.bytes;
+          if (!source.ref || !openBundle) throw new Error('Reconnect the library folder');
+          return extractBackupEntry({ openBundle }, source.ref);
+        }, () => cancelled, message => { if (!cancelled) setError(message); });
+        if (cancelled) { v.dispose(); return; }
+        owned = v; setPlayer(v);
+      } catch (e) {
+        if (!cancelled) setError(e instanceof Error ? e.message : 'Could not start playback');
+      } finally { if (!cancelled) setLoading(false); }
+    })();
+    return () => { cancelled = true; owned?.dispose(); };
+  }, [armed, program, scene, plan, result, openBundle, retry]);
 
   const sink = useMemo(() => player && {
     noteOn: (n: number, v: number) => {
@@ -48,24 +65,9 @@ export function ProgramPlay({ program, scene }: { program: NS4Program; scene: 'I
     setSink(sink); return () => clearSink(sink);
   }, [sink, setSink, clearSink]);
 
-  function stop() {
-    gen.current++; current.current?.dispose(); current.current = null;
-    setPlayer(null); setLoading(false); setSounding(new Set());
-  }
-  async function start() {
-    const epoch = ++gen.current;
-    setLoading(true); setError('');
-    try {
-      const ctx = getSharedCtx();
-      const v = await createProgramPlayer(ctx, program, scene, plan, async source => {
-        if (source.bytes) return source.bytes;
-        if (!source.ref || !folder) throw new Error('Reconnect the library folder');
-        return extractBackupEntry(folder, source.ref);
-      }, () => epoch !== gen.current, message => { if (epoch === gen.current) setError(message); });
-      if (epoch !== gen.current) { v.dispose(); return; }
-      current.current = v; setPlayer(v);
-    } catch (e) { if (epoch === gen.current) setError(e instanceof Error ? e.message : 'Could not start playback'); }
-    finally { if (epoch === gen.current) setLoading(false); }
+  function toggleArmed() {
+    if (!armed) getSharedCtx(); // unlock audio inside the user gesture
+    setProgramArmed(!armed);
   }
 
   const problems = player?.problems ?? plan.flatMap(p => p.problem ? [`${p.layer.kind} ${p.layer.id}: ${p.problem}`] : []);
@@ -80,14 +82,16 @@ export function ProgramPlay({ program, scene }: { program: NS4Program; scene: 'I
       </p>
       {!result && <p className="ps-sub">Choose the folder containing your bundles to load their piano and sample recordings.</p>}
       <div className="flex flex-wrap items-center gap-3">
-        <Button onClick={() => player || loading ? stop() : void start()} disabled={!result}>
-          {loading ? 'Cancel loading' : player ? 'Stop program' : 'Play this program'}
+        <Button onClick={toggleArmed} aria-pressed={armed}>
+          {armed ? 'Disarm programs' : 'Arm programs'}
         </Button>
+        <span className="ps-sub">{armed ? 'Armed · selecting a program or scene loads it automatically.' : 'Disarmed · programs stay silent until armed.'}</span>
         {loading && <span role="status">Loading program instruments…</span>}
         {player && <span role="status">Ready · {player.layers.length} layers: {player.layers.join(', ')}</span>}
       </div>
       {problems.length > 0 && <ul className="ps-sub">{problems.map((p, i) => <li key={i}>{p}</li>)}</ul>}
       {error && <p role="alert" className="on-error">{error}</p>}
+      {armed && error && !loading && <Button onClick={() => { getSharedCtx(); setRetry(n => n + 1); }}>Retry program</Button>}
       {sink && player && player.layers.length > 0 && <>
         <label className="ps-sub">Keyboard velocity {velocity}
           <input aria-label="Program keyboard velocity" type="range" min={1} max={127} value={velocity} onChange={e => setVelocity(Number(e.target.value))} />
