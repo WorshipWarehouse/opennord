@@ -9,6 +9,8 @@ describe('classifyFile', () => {
 
   it('recognizes bundles and samples', () => {
     expect(classifyFile('backup.ns4b')).toBe('bundle');
+    expect(classifyFile('Bank/Sounds.ns4pbundle')).toBe('bundle');
+    expect(classifyFile('Sounds.NS4PBUNDLE')).toBe('bundle');
     expect(classifyFile('snare.nsmp')).toBe('sample');
     expect(classifyFile('snare.nsmp3')).toBe('sample');
     expect(classifyFile('snare.nsmp4')).toBe('sample');

@@ -6,8 +6,9 @@
  * So importing a bundle means unzipping and decoding each `.ns4p`/`.ns4l` entry,
  * and sharing a collection means zipping individual programs back up.
  *
- * Legal note: a bundle carries **user programs only, never sample audio**
- * (docs/LEGAL.md). Programs reference factory samples by id.
+ * Vendor bundles may also contain piano/sample audio. This reader selects only
+ * programs; writeNs4Bundle exports only the program bytes supplied by its caller.
+ * Local import does not authorize sharing bundled audio (docs/LEGAL.md).
  */
 
 import { unzipSync, zipSync } from 'fflate';

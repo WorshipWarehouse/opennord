@@ -27,6 +27,32 @@ OpenNord is **free and open source** (AGPL-3.0). It exists because everything th
 
 Community patch sharing and AI (explain a patch, or generate one from a description) are designed but not built yet.
 
+## Import Stage 4 sound bundles locally
+
+Choose your library folder containing `.ns4pbundle` files (alongside `.npno`
+and `.nsmp*` files). Select the bundles in the bundle picker. Programs are
+expanded into the Library; bundled pianos and samples are indexed and read on
+demand, without loading the whole archive. Keep the original bundles in that
+folder. The single-program Import button still accepts individual programs.
+Open a Stage 4 program and press **Play this program** to load the active scene's
+available layers. Play the on-screen keyboard or connect a MIDI keyboard. Loading
+is cancellable; Stop, changing scene or leaving the program silences the preview.
+All piano/sample references in the two locally tested signature bundles resolve
+from their bundled recordings; no downloads were needed.
+
+This is an experimental preview: local piano/sample playback, OpenNord's organ
+model, and basic analog oscillator sketches. Splits (hard boundaries), transpose,
+octave shifts, levels and pan are applied. Analog/filter/envelope behavior is an
+independent approximation. WAVE/FM/noise and unknown oscillator layers are listed
+and left silent. Nord effects, morphs, arpeggiators, pitch bend, split crossfades,
+and advanced voicing are not reproduced. The current MIDI sustain gate holds all
+program layers together rather than honoring each layer's pedal switch. This is
+not full Nord patch playback or hardware-transfer qualification, nor permission
+to redistribute bundled audio.
+
+Verify private bundles locally without adding their content to Git:
+`NORD_BUNDLE_DIR="/path/to/sounds" npm test -- src/lib/folder/local-bundles.test.ts`
+
 ## Desktop app
 
 There is a desktop app for macOS and Windows on the

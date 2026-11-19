@@ -92,6 +92,8 @@ export interface PianoEngineEvents {
   onError?: (message: string) => void;
   /** The held notes changed (a key went down or up, or a note rang out). */
   onChange?: (held: Set<number>) => void;
+  /** Optional layer bus for program playback. */
+  destination?: AudioNode;
 }
 
 /** `null` when the key map doesn't name the recordings one for one, so keys can't be played. */
@@ -99,7 +101,7 @@ export function createPianoEngine(
   bytes: Uint8Array,
   dir: NspDirectory,
   zones: readonly NspZone[],
-  { onError, onChange }: PianoEngineEvents = {},
+  { onError, onChange, destination }: PianoEngineEvents = {},
 ): PianoEngine | null {
   if (zones.length === 0 || zones.length !== nspZoneCount(dir)) return null;
   type Voice = { src: AudioBufferSourceNode; gain: GainNode };
@@ -159,7 +161,7 @@ export function createPianoEngine(
         if (faded) { fading.delete(faded); stop(faded); }
         else release(held.keys().next().value!, STEAL_TIME_CONSTANT);
       }
-      const output = mix(ctx);
+      const output = destination ?? mix(ctx);
       const src = ctx.createBufferSource();
       src.buffer = buffer;
       const rate = 2 ** (key.semitones / 12);
