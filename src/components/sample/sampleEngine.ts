@@ -261,6 +261,7 @@ export function createSampler(
    *  lists, per key, the neighbouring keys whose recordings a unison voice or a repeated
    *  note may play ({@link unisonVoices}, {@link repeatSource}). */
   opts?: {
+    destination?: AudioNode;
     detuneCents?: number;
     unison?: SampleUnison | null;
     unisonLevel?: number | (() => number);
@@ -356,7 +357,7 @@ export function createSampler(
    *  as it is), else its own left and right gains — the DSP scales a stereo voice's two
    *  channels separately and sends a mono voice to both. */
   function connectOut(ctx: AudioContext, gain: GainNode, gainL: number, gainR: number): void {
-    if (gainL === 1 && gainR === 1) { gain.connect(ctx.destination); return; }
+    if (gainL === 1 && gainR === 1) { gain.connect(opts?.destination ?? ctx.destination); return; }
     gain.channelCount = 2;
     gain.channelCountMode = 'explicit';
     const split = ctx.createChannelSplitter(2);
@@ -368,7 +369,7 @@ export function createSampler(
       split.connect(side, ch);
       side.connect(merge, 0, ch);
     });
-    merge.connect(ctx.destination);
+    merge.connect(opts?.destination ?? ctx.destination);
   }
 
   return {

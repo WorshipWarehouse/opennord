@@ -2,6 +2,7 @@ import { useState } from 'react';
 import '../../styles/nord.css';
 import { isNs4Program, programTagFor, type NordProgram } from '../../lib/formats';
 import { activeLayers, sceneIIChanges, sceneTag, engineCardModel, headerView } from '../../lib/ns4/view';
+import { ProgramPlay } from './ProgramPlay';
 import { ProgramHeader } from './ProgramHeader';
 import { ProgramZones } from './ProgramZones';
 import { EngineCard } from './EngineCard';
@@ -119,6 +120,7 @@ export function ProgramView({ program }: { program: NordProgram }) {
     <div className="ps">
       <ProgramHeader header={headerView(program, scene)} aside={sceneSwitch} />
 
+      <ProgramPlay program={program} scene={scene} />
       <ProgramZones program={program} scene={scene} />
       <div className="ps-grid">
         {layers.map((l) => (

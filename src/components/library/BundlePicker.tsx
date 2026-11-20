@@ -13,7 +13,7 @@ export interface BundlePickerProps {
 }
 
 function backupName(path: string): string {
-  return (path.split('/').pop() ?? path).replace(/\.ns4b$/i, '');
+  return (path.split('/').pop() ?? path).replace(/\.(ns4b|ns4pbundle)$/i, '');
 }
 function sizeLabel(bytes: number): string {
   return bytes >= 1e9 ? `${(bytes / 1e9).toFixed(1)} GB` : `${Math.max(1, Math.round(bytes / 1e6))} MB`;

@@ -204,7 +204,7 @@ export function LibraryView({
             <>
               <p>“{folderName}” is connected, but no Nord files turned up in it.</p>
               <p className="mt-2 text-[13px] text-dim [&_code]:text-ink">
-                Check that it actually holds <code>.ns4p</code>/<code>.ns4b</code> files. On Android, a folder backed
+                Check that it actually holds <code>.ns4p</code>/<code>.ns4b</code>/<code>.ns4pbundle</code> files. On Android, a folder backed
                 by Google Drive or another cloud app can look connected but hand over nothing readable — try making
                 those files available offline (or moving them to on-device storage) and change folder.
               </p>
@@ -214,7 +214,7 @@ export function LibraryView({
             <>
               <p>Nothing here yet.</p>
               <Button variant="primary" onClick={onChooseFolder} disabled={busy}>Choose a folder…</Button>
-              <p className="mt-2 text-[13px] text-dim [&_code]:text-ink">Subfolders and <code>.ns4b</code> backups are included. Or import a single file, or connect your Nord.</p>
+              <p className="mt-2 text-[13px] text-dim [&_code]:text-ink">Subfolders and <code>.ns4b</code> backups and <code>.ns4pbundle</code> bundles are included. Or import a single file, or connect your Nord.</p>
             </>
           )}
         </LibraryEmpty>

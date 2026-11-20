@@ -142,3 +142,31 @@ describe('mainThreadScanner', () => {
     }
   });
 });
+
+
+describe('Stage 4 program bundles', () => {
+  it('discovers and expands programs while retaining lazy piano and sample references', async () => {
+    const zip = zipSync({
+      'meta.xml': strToU8('<bundle product_id="46"/>'),
+      'Program/Bank G/Lead.ns4p': solo,
+      'Piano/Upright/Grand.npno': new Uint8Array(128),
+      'Samp Lib/Strings.nsmp4': new Uint8Array(64),
+    });
+    const scanner = mainThreadScanner();
+    const batches: ScanBatch[] = [];
+    const name = 'Signature.NS4PBUNDLE';
+    const descriptors = await scanner.scanLoose([file(`Nord/${name}`, zip)], b => batches.push(b));
+    expect(descriptors).toEqual([{ path: name, size: zip.length }]);
+    expect(batches).toHaveLength(0);
+    await scanner.expandBundles([name], b => batches.push(b));
+    expect(drain(batches).errors).toEqual([]);
+    expect(drain(batches).programs[0].bytes).toEqual(solo);
+    expect(batches.flatMap(b => b.backupPianos)).toMatchObject([
+      { bundlePath: name, entry: { path: 'Piano/Upright/Grand.npno' } },
+    ]);
+    expect(batches.flatMap(b => b.backupSamples)).toMatchObject([
+      { bundlePath: name, entry: { path: 'Samp Lib/Strings.nsmp4' } },
+    ]);
+    expect(await scanner.openBundle!(name)).toBeInstanceOf(File);
+  });
+});

@@ -5,8 +5,8 @@ export type FileClass = 'program' | 'bundle' | 'sample' | 'preset' | 'piano';
 const PROGRAM_EXTS = ['.ns4p', '.ns4l', '.ne6p', '.ne6l'];
 /** Organ/Piano/Synth preset files — recognized by tag, listed in the Presets category (no decode). */
 const PRESET_EXTS = ['.ns4o', '.ns4n', '.ns4y', '.ns3y', '.ns2s'];
-/** ZIP backups — expanded into their contained programs. */
-const BUNDLE_EXTS = ['.ns4b'];
+/** Stage 4 ZIP backups and program bundles; indexed without loading audio. */
+const BUNDLE_EXTS = ['.ns4b', '.ns4pbundle'];
 /** Piano-library sound sets — recognized, listed in the Pianos category (no decode). */
 const PIANO_EXTS = ['.npno'];
 /** Nord samples → the Samples tab. */

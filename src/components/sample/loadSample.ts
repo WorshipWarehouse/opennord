@@ -33,7 +33,7 @@ export interface LoadedSample {
  */
 export function loadSample(
   bytes: Uint8Array, name: string,
-  live: { env: () => AmpEnvelope | null; unisonLevel: () => number },
+  live: { env: () => AmpEnvelope | null; unisonLevel: () => number; destination?: AudioNode },
 ): LoadedSample {
   const file = readNsmp(bytes);
   const decodable = isDecodableNsmp(file);
@@ -64,7 +64,7 @@ export function loadSample(
   // sample's own values, and its neighbouring recordings per key (see sampleEngine).
   const sampler = decodable
     ? createSampler(playableZones, strokesByGlobalID, live.env, {
-      detuneCents, unison: readSampleUnison(bytes), unisonLevel: live.unisonLevel, alternates: readNoteAlternates(bytes),
+      destination: live.destination, detuneCents, unison: readSampleUnison(bytes), unisonLevel: live.unisonLevel, alternates: readNoteAlternates(bytes),
     })
     : null;
   return { bytes, file, name: stem, decoded, zones, strokes, decodable, playableZones, order, strokesByGlobalID, sampler };
